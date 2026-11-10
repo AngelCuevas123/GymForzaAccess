@@ -147,12 +147,13 @@ fun GymForzaAccessApp() {
                                     )
                                 }
 
-                                if (user?.role != "admin") {
-                                    SupabaseProvider.client.auth.signOut()
-                                    error("Esta aplicación es exclusiva para administradores.")
-                                }
+                                val adminUser = user?.takeIf { it.role == "admin" }
+                                    ?: run {
+                                        SupabaseProvider.client.auth.signOut()
+                                        error("Esta aplicación es exclusiva para administradores.")
+                                    }
 
-                                adminName = user.fullName ?: user.email ?: "Administrador"
+                                adminName = adminUser.fullName ?: adminUser.email ?: "Administrador"
                                 isAdmin = true
                                 password = ""
                                 message = ""
