@@ -1,0 +1,13 @@
+
+# Credenciales privadas
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+.gradle/
+build/
+**/build/
+
+# Archivos locales
+.DS_Store

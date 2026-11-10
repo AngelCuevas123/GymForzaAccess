@@ -1,10 +1,16 @@
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
+val localProperties = java.util.Properties().apply {
+    load(rootProject.file("local.properties").inputStream())
+}
+
 android {
     namespace = "com.gymforza.access"
+
     compileSdk {
         version = release(37)
     }
@@ -17,6 +23,18 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            "\"${localProperties.getProperty("SUPABASE_URL")}\""
+        )
+
+        buildConfigField(
+            "String",
+            "SUPABASE_PUBLISHABLE_KEY",
+            "\"${localProperties.getProperty("SUPABASE_PUBLISHABLE_KEY")}\""
+        )
     }
 
     buildTypes {
@@ -26,12 +44,15 @@ android {
             }
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -44,6 +65,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
@@ -68,6 +90,9 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
+    // SUPABASE AUTH
+    implementation(libs.supabase.auth)
 
-
+    // KTOR ANDROID
+    implementation(libs.ktor.client.android)
 }
