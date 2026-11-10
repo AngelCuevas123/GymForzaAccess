@@ -203,14 +203,16 @@ fun GymForzaAccessApp() {
                                     message = result.message ?: "Acceso autorizado."
                                 } else {
                                     authorized = false
-                                    message = result?.message ?: when (response.code()) {
-                                        401 -> "Sesión expirada. Inicia sesión nuevamente."
-                                        403 -> "Acceso denegado."
-                                        404 -> "Código QR no encontrado."
-                                        409 -> "Este código QR ya fue utilizado."
-                                        410 -> "El código QR ha expirado."
-                                        else -> "No se pudo validar el código (HTTP ${response.code()})."
-                                    }
+                                    message = result?.message ?: response.backendMessage(
+                                        when (response.code()) {
+                                            401 -> "Sesión expirada. Inicia sesión nuevamente."
+                                            403 -> "Acceso denegado."
+                                            404 -> "Código QR no encontrado."
+                                            409 -> "Este código QR ya fue utilizado."
+                                            410 -> "El código QR ha expirado."
+                                            else -> "No se pudo validar el código (HTTP ${response.code()})."
+                                        }
+                                    )
                                     if (response.code() == 401) {
                                         SupabaseProvider.client.auth.signOut()
                                         isAdmin = false
