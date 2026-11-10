@@ -178,6 +178,12 @@ fun GymForzaAccessApp() {
                 authorized = authorized,
                 member = member,
                 scanResetKey = scanResetKey,
+                onScanAgain = {
+                    authorized = null
+                    member = null
+                    message = ""
+                    scanResetKey++
+                },
                 onQrDetected = { qrToken ->
                     scope.launch {
                         busy = true
@@ -226,7 +232,6 @@ fun GymForzaAccessApp() {
                                 ?: "No se pudo conectar con el servidor."
                         } finally {
                             busy = false
-                            scanResetKey++
                         }
                     }
                 },
@@ -357,6 +362,7 @@ private fun AccessScreen(
     authorized: Boolean?,
     member: MemberInfo?,
     scanResetKey: Int,
+    onScanAgain: () -> Unit,
     onQrDetected: (String) -> Unit,
     onLogout: () -> Unit,
     busy: Boolean
@@ -396,7 +402,7 @@ private fun AccessScreen(
                 CameraScanner(
                     modifier = Modifier.fillMaxSize(),
                     resetSignal = scanResetKey,
-                    enabled = !busy,
+                    enabled = !busy && authorized == null,
                     onQrDetected = onQrDetected
                 )
                 Box(
@@ -407,7 +413,11 @@ private fun AccessScreen(
                     )
                 )
                 Text(
-                    if (busy) "VALIDANDO..." else "CENTRA EL CÓDIGO QR",
+                    when {
+                        busy -> "VALIDANDO..."
+                        authorized != null -> "VALIDACIÓN COMPLETADA"
+                        else -> "CENTRA EL CÓDIGO QR"
+                    },
                     color = White,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -460,6 +470,21 @@ private fun AccessScreen(
                 }
             }
         }
+        if (authorized != null && !busy) {
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = onScanAgain,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Green,
+                    contentColor = Navy
+                ),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text("ESCANEAR OTRO QR", fontWeight = FontWeight.Bold)
+            }
+        }
+
         Spacer(Modifier.height(12.dp))
         Text(
             "GYM FORZA • SISTEMA DE ACCESO",
@@ -483,6 +508,8 @@ private fun CameraScanner(
     val previewView = remember { PreviewView(context) }
     val executor = remember { Executors.newSingleThreadExecutor() }
     val alreadyDetected = remember { AtomicBoolean(false) }
+    val currentEnabled by rememberUpdatedState(enabled)
+    val currentOnQrDetected by rememberUpdatedState(onQrDetected)
     val scanner: BarcodeScanner = remember {
         val options = BarcodeScannerOptions.Builder()
             .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -527,11 +554,11 @@ private fun CameraScanner(
                         scanner.process(input)
                             .addOnSuccessListener { barcodes ->
                                 val value = barcodes.firstOrNull()?.rawValue
-                                if (enabled && value != null &&
+                                if (currentEnabled && value != null &&
                                     alreadyDetected.compareAndSet(false, true)
                                 ) {
                                     ContextCompat.getMainExecutor(context).execute {
-                                        onQrDetected(value)
+                                        currentOnQrDetected(value)
                                     }
                                 }
                             }
