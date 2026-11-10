@@ -2,6 +2,7 @@ package com.gymforza.access
 
 import com.google.gson.annotations.SerializedName
 import retrofit2.Response
+import org.json.JSONObject
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
@@ -61,4 +62,13 @@ object ApiProvider {
             .build()
             .create(GymForzaApi::class.java)
     }
+}
+
+/** Extrae el mensaje JSON que Express devuelve en respuestas HTTP no exitosas. */
+fun <T> Response<T>.backendMessage(fallback: String): String {
+    return runCatching {
+        JSONObject(errorBody()?.string().orEmpty())
+            .optString("message")
+            .takeIf { it.isNotBlank() }
+    }.getOrNull() ?: fallback
 }
